@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>White Forest</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#02040647;
+  --neon:#3cff00;
+  --neon-soft:#00ff00;
+  --calm-bg:#eaf6ff;
+  --calm-text:#10354a;
+  --ui-text:#1aff00;
+}
+
+
+
+html,body{height:100%; margin:0; background:var(--bg); overflow:hidden; font-family:"Times New Roman", Times, serif; color:var(--ui-text);}
+
+
+#bg-layer { position:fixed; inset:0; background: url('https://i.pinimg.com/originals/50/de/b5/50deb56e0857599e89871089c3d6cf33.gif  ') center/cover no-repeat; filter:brightness(1) saturate(1); z-index:0; }
+
+
+#stage {
+  position:absolute; left:50%; top:50%;
+  transform:translate(-50%,-40%);
+  width:100%; height:100%;
+  display:flex; align-items:flex-end; justify-content:center;
+  pointer-events:auto; z-index:2;
+}
+
+
+#sprite {
+  position:absolute;
+  left:37%;
+  top:20px;
+  transform:translateX(-50%);
+  width:420px;
+  opacity:0;
+  transition:opacity .36s ease, transform .36s ease;
+  filter: drop-shadow(0 0 28px rgba(0, 179, 255, 0));
+  z-index:6;
+}
+
+
+#narration-box {
+  position:absolute;
+  left:10%;
+  bottom:15%;
+  width:100%;
+  min-width:360px;
+  max-width:760px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.92), rgba(0, 255, 21, 0.538));
+  border-radius:3px;
+  padding:20px 22px;
+  box-shadow: 0 18px 48px rgba(0, 255, 47, 0.503), inset 0 1px 0 rgba(255,255,255,0.02);
+  border:1px solid rgba(0,255,150,0.06);
+  z-index:6;
+}
+
+
+#narration-text{
+  font-family:"Times New Roman", Times, serif;
+  font-size:20px;
+  line-height:1.65;
+  color:var(--ui-text);
+  min-height:200px;
+  max-height:300px;
+  overflow:hidden;
+  text-align:left;
+  margin-bottom:12px;
+}
+
+
+#next-seg {
+  display:inline-block; padding:8px 12px; border-radius:8px; cursor:pointer;
+  background:linear-gradient(180deg,var(--neon), #001303ac); color:#00ff2a; font-weight:700; border: 10px;
+  font-family:"Times New Roman", Times, serif;
+}
+
+
+#center-input {
+  margin-top:12px;
+  display:flex; justify-content:center; gap:10px; align-items:center;
+}
+#center-input input {
+  padding:10px 12px; width:60%; border-radius:8px; border:1px solid rgb(43, 255, 0);
+  background: rgba(255, 0, 0, 0.02); color:var(--ui-text); font-family:"Times New Roman", Times, serif;
+}
+#center-input button {
+  padding:10px 14px; border-radius:8px; border: 1px solid #15ff00; background:linear-gradient(180deg,#33ff008e, #00000000);
+  color:#15ff00; font-weight:500; cursor:pointer;
+}
+
+
+#calm-overlay {
+  background: radial-gradient(ellipse at center, rgba(230,245,255,0.35) 0%, rgba(225,240,255,0.22) 25%, rgba(220,236,248,0.12) 60%, rgba(0,0,0,0) 100%);
+}
+
+
+
+#clue-panel {
+  position:absolute;
+  right:4%;
+  bottom:4%;
+  width:30%;
+  min-width:260px;
+  max-width:380px;
+  height:90%;            /* FULL right-side height as requested */
+  background: linear-gradient(180deg, rgba(0, 255, 26, 0.737), rgb(0, 0, 0));
+  border-radius:12px;
+  padding:16px;
+  box-shadow: 0 16px 40px rgba(47, 255, 0, 0.6);
+  border:1px solid rgb(0, 255, 13);
+  z-index:6;
+  display:none; 
+  overflow:auto;
+}
+
+
+#clue-panel h3 { margin:6px 0 10px 0; color:var(--neon-soft); font-size:14px; }
+
+
+#clue-code { font-family:"Courier New", monospace; color:var(--neon); background:rgba(0,0,0,0.3); padding:12px; border-radius:10px; margin-bottom:12px; font-size:14px; }
+
+
+#clue-image { width:100%; height:40%; min-height:160px; background:rgba(255,255,255,0.02); border-radius:8px; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:12px; }
+#clue-image img{ max-width:100%; max-height:100%; object-fit:cover; }
+
+
+#clue-input { margin-top:8px; display:flex; gap:8px; align-items:center; }
+#clue-input input{ flex:1; padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.04); background:rgba(255,255,255,0.02); color:var(--ui-text); font-family:"Times New Roman", Times, serif; }
+#clue-input button{ padding:10px 12px; border-radius:8px; border:0; background:linear-gradient(180deg, #000000ae,#00ff006d); color:#2bff00; font-weight:500; cursor:pointer; }
+
+
+#clue-hint{ font-size:13px; color:rgba(180,255,220,0.9); margin-top:8px; }
+
+
+.glitch { font-family:"Baskerville Old Face", Baskerville, Palatino, serif; color:var(--neon); text-shadow:0 0 10px rgba(0,255,150,0.22); padding:0 3px; border-radius:3px; animation:gentleGlitch .26s infinite; display:inline-block; }
+@keyframes gentleGlitch{ 0%{transform:translate(0,0)} 25%{transform:translate(-1px,0.4px)} 50%{transform:translate(1px,-1px)} 75%{transform:translate(0.5px,0.8px)} 100%{transform:translate(0,0)} }
+
+
+.stage-shake { animation:stageShake .36s infinite; }
+@keyframes stageShake{ 0%{transform:translate(-50%,-40%) translate(0,0)} 25%{transform:translate(-50%,-40%) translate(-4px,3px)} 50%{transform:translate(-50%,-40%) translate(4px,-3px)} 75%{transform:translate(-50%,-40%) translate(-3px,-2px)} 100%{transform:translate(-50%,-40%) translate(0,0)} }
+
+
+@keyframes softShimmer {
+  0% { text-shadow:0 0 2px rgba(0, 251, 255, 0.282); }
+  50%{ text-shadow:0 0 6px rgba(0, 251, 255, 0.615); }
+  100%{ text-shadow:0 0 2px rgb(0, 251, 255); }
+}
+
+@keyframes tinyPulse {
+  0%{ opacity:1; }
+  50%{ opacity:3; }
+  100%{ opacity:1; }
+}
+
+
+.calmBox { background: linear-gradient(180deg, rgba(66, 161, 255, 0.63), rgba(220,236,248,0.94)) !important; color:var(--calm-text) !important; border:1px solid rgba(24,80,110,0.06) !important; box-shadow:0 12px 30px rgba(21, 154, 255, 0.773) !important; }
+.calmText { font-family:'Cormorant Garamond', serif; color:var(--calm-text); text-shadow:none; }
+
+
+#ending-screen{ display:none; position:fixed; inset:0; background: linear-gradient(180deg,#e8f6ff 0%, #dff1ff 100%); z-index:50; }
+#ending-inner{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:85%; max-width:1100px; text-align:center; font-family:'Cormorant Garamond', serif; color:var(--calm-text); font-size:22px; line-height:1; padding:24px; }
+
+
+#title-screen{ position:fixed; inset:0; z-index:60; background:rgba(1,3,6,0.95); display:flex; align-items:center; justify-content:center; }
+#title-inner{ max-width:920px; text-align:center; color:#cfffe6; padding:28px; font-family:"Times New Roman", Times, serif; }
+.title-h1{ font-size:44px; margin-bottom:12px; text-shadow:0 0 18px rgba(0,255,150,0.32); }
+
+.scene10 #narration-box,
+.scene10 #clue-panel,
+.scene10 input,
+.scene10 textarea {
+  background: linear-gradient(180deg, rgba(66, 161, 255, 0.63), rgba(220,236,248,0.94)) !important;
+
+  color:#C7E6FF !important; border:1px solid rgba(24,80,110,0.06) !important; box-shadow:0 12px 30px rgba(21, 154, 255, 0.773) !important; 
+}
+.scene10 .enc.calm {
+  color: #C7E6FF !important;
+}
+.scene10 .enc.calm code {
+  color: #A7D4FF !important;
+}
+.scene10 button {
+  background:#4f6c8f89 !important;
+  color:#C7E6FF !important;
+}
+.scene10 #calm-overlay {
+  background:rgba(130,160,200,0.25) !important;
+}
+
+
+.scene11 #narration-box,
+.scene11 #clue-panel,
+.scene11 input,
+.scene11 textarea {
+  background: linear-gradient(180deg, rgba(48, 15, 120, 0.655), rgba(220, 236, 248, 0.619)) !important;
+  color:#D7B6FF !important; border:1px solid rgba(117, 48, 255, 0.785) !important; box-shadow:0 12px 30px rgba(142, 67, 255, 0.708) !important;
+}
+.scene11 .enc.calm {
+  color: #D7B6FF !important;
+}
+.scene11 .enc.calm code {
+  color: #EBD4FF !important;
+}
+.scene11 button {
+  background:#6a40a89e !important;
+  color:#D7B6FF !important;
+}
+.scene11 #calm-overlay {
+  background:rgba(120,60,180,0.22) !important;
+}
+
+
+.scene10 #narration-text {
+  color: #C7E6FF !important;
+}
+
+
+.scene11 #narration-text {
+  color: #D7B6FF !important;
+}
+
+
+.scene10 #clue-panel,
+.scene10 #clue-panel * {
+  color: #C7E6FF !important;
+}
+
+
+.scene11 #clue-panel,
+.scene11 #clue-panel * {
+  color: #D7B6FF !important;
+}
+
+
+.softGlitchC {
+  animation: softShimmer 2.4s ease-in-out infinite,
+             tinyPulse 2.2s ease-in-out infinite;
+}
+
+
+@media (max-width:900px){
+  #narration-box{ width:86%; left:6% }
+  #clue-panel{ position:static; width:88%; height:auto; left:6%; right:6%; margin:12px auto; display:none } /* hide the right panel on small screens by default */
+  #sprite{ left:50%; top:4%; width:300px }
+}
+</style>
+</head>
+<body>
+
+
+<div id="bg-layer"></div>
+
+
+<div id="title-screen">
+  <div id="title-inner">
+    <div class="title-h1">THE WHITE RABBIT'S TRAIL</div>
+    <div style="font-size:18px;line-height:1.6; margin-bottom:18px; color:rgba(220,255,240,0.95)">
+      <div id="tl1">A blue light once walked these trees...seemingly looking for something
+        <p> Will you follow?</p></div>
+      <div id="tl2" style="opacity:0">It's not real</div>
+      <div id="tl3" style="opacity:0">I'm not real... Am I?</div>
+      <div id="tl4" style="opacity:0">What could be down the memory lane?</div>
+    </div>
+    <div><button id="startCinematicBtn" onclick="runTitleCinematicInternal()" style="padding:12px 24px;border-radius:1px;background:linear-gradient(180deg,var(--neon),#0000007f);border:0;color:#00ff1e;font-weight:550;">Follow her trail...</button></div>
+  </div>
+</div>
+
+
+<div id="calm-overlay" style="position:fixed;inset:0;pointer-events:none;z-index:1;mix-blend-mode:screen;opacity:0;transition:opacity 600ms;"></div>
+
+
+<img id="sprite" src="" alt="sprite">
+
+
+<div id="stage" style="display:none">
+  
+  <div id="narration-box">
+    <div id="narration-text"></div>
+
+    
+    <div id="center-input" style="display:none">
+      <input id="center-answer" type="text" placeholder="Enter the key..." />
+      <button id="center-submit">Enter</button>
+    </div>
+
+    <div style="display:flex; gap:12px; align-items:center; margin-top:10px;">
+      <button id="next-seg">Continue</button>
+      <div style="flex:1"></div>
+      <a id="doc-link" href="drive.google.com/file/d/1o9i5doH9qV9sm7DOE00ZaJYDRW3Kx8tL/view?usp=drive_link" target="_blank" style="font-size:13px; color:rgb(0, 221, 255); text-decoration:underline;">I'm with you! ₊ ⊹₍ᐢᐢ₎ ᰔᩚ Here's the System Bypass!</a>
+    </div>
+ </div>
+
+  
+  <div id="clue-panel">
+    <h3>Clue</h3>
+    <div id="clue-code"></div>
+    <div id="clue-image"><img id="clue-img" src="https://i.imgur.com/placeholder.png" alt="clue image"></div>
+    <div id="clue-input">
+      <input id="clue-answer" type="text" placeholder="Type your answer...">
+      <button id="clue-submit">Submit</button>
+    </div>
+    <div id="clue-hint"></div>
+    <div style="margin-top:10px; font-size:12px; color:rgba(180,255,220,0.9)">Note: you can also open the original text: <a href="/mnt/data/White Rabbit.docx" target="_blank" style="color:var(--neon-soft)">White Rabbit.docx</a></div>
+  </div>
+</div>
+
+
+<div id="ending-screen">
+  <div id="ending-inner"></div>
+</div>
+
+<script>
+
+function normalizeText(s){
+  if(!s) return "";
+  let t = s.toLowerCase();
+  t = t.replace(/\u2019/g, "'");
+  t = t.replace(/[^a-z0-9\s]/g,'');
+  t = t.replace(/\s+/g,' ').trim();
+  return t;
+}
+
+
+const scenes = [
+  {
+    id:1, sprite:"https://i.pinimg.com/originals/01/78/71/0178717b986c40c909e35213e4f25ad0.gif", glitch:true, calm:false, bg: "https://i.pinimg.com/originals/50/de/b5/50deb56e0857599e89871089c3d6cf33.gif",
+    segments:[
+      `You—`,
+      `{g:You’re not—}`,
+      `You're here?`,
+      `{g:Why are you here?}`,
+      `Unauthorized Personnel detected.`,
+      `To confirm your identity, please input the key code:
+
+      <p> Security countermeasure, encoded password for {g:Ḁ̵̝͚̣̺̯͒n̵̢̡̡̛̟̼͉̦͊͛̆̅̍̃̇̌̐͜g̴̡̛̻̬͉̯̼̭͍̒͊͛̑͜͝e̶̘͎̻̺̥͕̎́l̸̢͍͉͚͙͆̾͐͆͌͠ą̸̜̀̒̄̃̾̐}
+              
+      <p> Delete everything before [drive.] 
+      
+      <p {g:This might ̴̞̮͇̠̻̼͈͖̺̐̑̏̓́̂́̅̆͜h̸̡͉̳̦̎͜e̵͕̾̈́̒̒̀̍͊͘͝ĺ̸̗̙͕p̷̙̙͎̮͔̹̻̘̓̔ ̷̛̙̮͙̼͎̞͚̩̃̅̈͋̀̔̓̂̓ẏ̵̮̮̬̞͎̝̃ơ̴͚̺̘͒͋͘͜͜͝u̷͚̳̍.}`
+      
+    ],
+    
+    clueHtml: `<div style="font-family:Courier, monospace">PUEEL GEERF</div><div style="font-size:12px;color:rgba(180,255,220,0.85);margin-top:6px;">(ROT13)</div>`,
+    clueImage:"https://i.imgur.com/placeholder.png",
+    expected:["Clementine","clementine","asd"]
+  },
+
+  
+  {
+    id:2, sprite:"", glitch:true, calm:false, bg: "https://i.pinimg.com/originals/41/17/38/41173826edcc137e45d994b52047b00c.gif",
+    segments:[
+      `The Green Kitty steps into the forest the White Rabbit once loved.`,
+      `But something feels wrong… The wind is warped, carrying static instead of songs.
+Petals fall from trees that shouldn’t be blooming.`,
+      `Huh...?`,
+      `Up ahead, she hears construction noises. Two architect axolotls stand on a fallen log, arguing.`,
+      `One holds a blueprint. The other holds a saw made of shells.`,
+      `“NO, NO,” one axolotl huffs, slapping the paper. “The walls MUST be classy.”`,
+      `“But which wood?” the other sighs. “There are just simply too many choices and endless possibilities… What wood could make a mansion seem grandeur?”`,
+      `The phrase makes the kitty stop.`,
+      `A memory flickers,
+      <p> A mansion:
+<p>Pinkish planks.
+<p>Her and the Bunny laughing while building the roof wrong ten times.`,
+      `The axolotls notice her.
+<p></p>
+“You there,” one says. “What wood did YOU use for a grand mansion?”`,
+      
+    ],
+    clueHtml:`<div style="font-family:Courier, monospace">catchastelderacerallyachtheiridgelite</div><div style="font-size:12px;color:rgba(180,255,220,0.85);margin-top:6px;">(Reversed String)</div>`,
+    clueImage:"https://i.pinimg.com/736x/55/3e/2a/553e2ae6b45d2cc60513606a69f75cf8.jpg",
+    expected:["asd","Cherry Tree", "cherry tree", "cherrytree"]
+  },
+
+  
+  {
+    id:3, sprite:"", glitch:true, calm:false, bg: "https://i.pinimg.com/originals/d2/72/09/d27209bb21b3605ceadf884a8c9dc88e.gif",
+    segments:[
+      `The forest dims to purple and gold, an eternal dusk.`,
+      `Two hippy horses sit in a meadow of glowing mushrooms, braiding each other’s manes with shells.`,
+      `“Excuse us, dude,” one says lazily. “We’re trying to remember the name of this… like… town?”
+
+      <p>“Where ponies gossip all day, y’know? And style themselves with ridiculous hairstyles?”`,
+      `The Kitty almost laughs…
+      <p>she remembers.`,
+      `She and the Bunny, talking endlessly as they collected pearls or clovers until dusk and dawn had blessed the skies with their existence.`
+    ],
+    clueHtml:`<div style="font-family:Courier, monospace">Pensive oblique nomad yonder tidal orchard window narrow</div><div style="font-size:12px;color:rgba(180,255,220,0.85);margin-top:6px;">(Nothing's more important than the winner)</div>`,
+    clueImage:"https://i.pinimg.com/736x/49/5b/d3/495bd3820c791e2aef8014b19f7bb95d.jpg",
+    expected:["asd", "Pony Town", "pony town", "ponytown"]
+  },
+
+  
+  {
+    id:4, sprite:"", glitch:true, calm:false, bg: "https://i.pinimg.com/originals/d6/eb/20/d6eb204e81cecbe22943fc31105afe7d.gif",
+    segments:[
+      `As the Green Kitty walked deeper into the forest
+      <p>Lights flashed above her, neon pink and electric blue.`,
+      `A drunk caterpillar wearing sunglasses and holding a tiny mic wiggles on a mushroom stage.`,
+      `“Yo… YO…” he slurs. “Finish… my line…Life is not a waste a time and time is not a waste of life. So let's stop wasting time and have the time of our life”
+      <p>The forest distorts into a cheap nightclub backdrop.
+      <p>He points at her dramatically. Waiting for the next line.`
+    ],
+    clueHtml:`<div style="font-family:Courier, monospace">δ α λ ε!</div><div style="font-size:12px;color:rgba(180,255,220,0.85);margin-top:6px;">(Don't forget the punctuation!)</div>`,
+    clueImage:"https://i.pinimg.com/736x/71/55/76/715576b279dd8fcc6eecb6f882206e5d.jpg",
+    expected:["asd","dale!","Dale!"]
+  },
+
+  
+  {
+    id:5, sprite:"", glitch:true, calm:false, bg: "https://i.pinimg.com/originals/16/06/b7/1606b79ee1af98904d619d009ed4424a.gif",
+    segments:[
+      `Snickering to herself as she walked pass the rapping caterpillar.`,
+      `A wooden bridge came into view, old and creaking.
+      <p>Three plush bears, alive but stitched, stood guard.`,
+      `Their button eyes shine.
+      <p>The middle one steps forward.
+      <p>“None may cross,” he booms, “unless you remember who we are.”`,
+      `Her breath catches…
+      <p>She recognizes them.
+      <p>The bears blink. “Do you… remember us?”`
+    ],
+    clueHtml:`<div style="font-family:Courier, monospace">2•5•14, 3•1•18•12, 19•20•5•22•5</div><div style="font-size:12px;color:rgba(180,255,220,0.85);margin-top:6px;">Perhaps a toddler might know this...</div>`,
+    clueImage:"https://i.pinimg.com/736x/d5/27/16/d527167f84b67a3ec4f67453955b669d.jpg",
+    expected:["asd", "Ben, Carl, Steve", "Ben Carl Steve", "ben carl steve", "ben, carl, steve"]
+  },
+
+  
+  {
+    id:6, sprite:"file:///C:/Users/ziamo/Downloads/456304f9d2798d2fab8e3fa57885b93e-removebg-preview.png", glitch:true, calm:false, bg: "https://i.pinimg.com/originals/7d/3d/8b/7d3d8b9298a1b7c0f159dfcf67a6eec9.gif",
+    segments:[
+      `The Green Kitty softly smiled to herself as she remembered her childhood friends, it’s been awhile since she saw them…`,
+      `She eventually slowed down on her tracks as her eyes landed on a whiny wolf blocking the trail, pacing nervously.`,
+      `“WHO GOES THERE— wait, wait, don’t come closer, I bite— no actually I don’t—WAIT I DO—NO I DON’T—”
+      <p>He collapses dramatically.
+      <p>“I can’t let you pass unless you tell me your rank,” he sniffles.`,
+    ],
+    clueHtml:`<div style="font-family:Courier, monospace">r jv hxda juyqj</div><div style="font-size:12px;color:rgba(180,255,220,0.85);margin-top:6px;">(Caesar Cipher)</div>`,
+    clueImage:"https://i.pinimg.com/736x/b4/b4/03/b4b403f04f7c72db80f1e378ba9f791e.jpg",
+    expected:["asd","i am your alpha", "I am your Alpha"]
+  },
+
+  
+  {
+    id:7, sprite:"", glitch:true, calm:false, bg: "https://i.pinimg.com/originals/f7/6d/5f/f76d5fda7f155e201931bd9f06e1b1d9.gif",
+    segments:[
+      `Weirdo...
+      <p> She uttered to herself as she watched the wolf run away`,
+      `The chaos of the forest falls away.
+      <p>Silence blooms.
+      <p>Blue forget-me-nots line the path. They glow with gentle, sad light.`,
+      `And then... a whisper.
+      <p>Soft.
+      <p>Broken.
+      <p>Lonely.
+      <p></p>
+      <p>But familiar.`,
+      `The kitty stops walking.
+      <p>She knows this voice.
+      <p>Her heart leaps.`
+    ],
+    clueHtml:`<div style="font-family:Courier, monospace">.- .-. . / -.-- --- ..- / -.-. --- -- .. -. --. ..--..</div><div style="font-size:12px;color:rgba(180,255,220,0.85);margin-top:6px;">(Morse)</div>`,
+    clueImage:"https://i.pinimg.com/736x/d2/61/16/d2611675e1a1acf923d4daa69a42bc89.jpg",
+    expected:["asd","Are you coming?", "Are you coming", "are you coming?"]
+  },
+
+  
+  {
+    id:8, sprite:"", glitch:true, calm:false, bg: "https://i.pinimg.com/originals/da/b1/d1/dab1d1228b1ace2b2bb629616bec43ab.gif",
+    segments:[
+      `The path widens.
+      <p>Fireflies weave through the branches.`,
+      `Another whisper.`,
+      `Clearer this time.`,
+      `Her breath shakes.`,
+      `Her chest tightens.`,
+      `She keeps walking.`
+    ],
+    clueHtml:`<div style="font-family:Courier, monospace">Edw mk fwq ndoo bdpxqnp?</div><div style="font-size:12px;color:rgba(180,255,220,0.85);margin-top:6px;">(Vignere Cipher)</div>`,
+    clueImage:"https://i.pinimg.com/736x/0d/4b/96/0d4b96489dfd1fd451f6cbfd6b029a94.jpg",
+    expected:["asd", "Why do you push through?", "Why do you push through", "why do you push through", "why do you push through?"]
+  },
+
+  
+  {
+    id:9, sprite:"", glitch:true, calm:false, bg: "https://i.pinimg.com/originals/4e/70/67/4e7067de8b9bcc57e3246b6d0aa5bc28.gif",
+    segments:[
+      `The clearing is now visible through the trees.`,
+      `One last whisper reaches her—`,
+      `So gentle, she almost misses it.`,
+    ],
+    clueHtml:`<div style="font-family:Courier, monospace">abbba ababa aabaa aaaaa baaab aabaa aaaba abbab ababb aabaa aabab abbab baaaa ababb aabaa</div><div style="font-size:12px;color:rgba(180,255,220,0.85);margin-top:6px;">(It's a type of Food Cipher)</div>`,
+    clueImage:"https://i.pinimg.com/736x/5c/81/23/5c8123c2f60ae0c0f257f8b666673692.jpg",
+    expected:["asd","please come for me"]
+  },
+
+  
+  {
+    id:10, sprite:"", glitch:false, calm:true, bg: "https://i.pinimg.com/originals/9c/f6/19/9cf6192b109b15ad892fbc56e8471151.gif",
+    segments:[
+      `The forest opens.`,
+      `Moonlight pours like silver water.`,
+      `There —
+      <p>standing at the center —
+      <p>
+      <p>the White Rabbit.`,
+      `Her fur is white like snow, but shimmering faintly blue underneath, as if waiting for something.
+      <p>The kitty runs forward as the bunny watched her with a soft smile before opening her mouth.`,
+      `Speaks.
+      <p>But no sound reaches the Green Kitty.`,
+      `The kitty frowns. “...What?”`,
+      `The bunny steps closer.`,
+      `Eyes warm.`,
+      `Tender.`,
+      `Overflowing.`,
+      `She repeats herself slowly…`
+    ],
+    clueHtml:`<div style="font-family:Courier, monospace">Invisible? Uncreated? Unwritten?</div><div style="font-size:12px;color:rgba(24,80,110,0.85);margin-top:6px;">(Observe)</div>`,
+    clueImage:"https://i.pinimg.com/736x/28/9a/41/289a41d965f71d0e28297478996fbb91.jpg",
+    expected:["asd", "You came", "you came"]
+  },
+
+  
+  {
+    id:11, sprite:"", glitch:false, calm:true, bg: "https://i.pinimg.com/originals/ce/e3/2e/cee32e097de238cc7fd0d1a2874e060c.gif",
+    segments:[
+      `Hours pass.`,
+      `They lie on the grass, beneath a sky full of stars.
+      <p>The bunny turns her head. The bunny’s eyes soften.`,
+      `“Kitty,” she whispers, “do you know… what day it is today?”`
+    ],
+    clueHtml:`<div style="font-family:Courier, monospace">A very important day perhaps?</div><div style="font-size:12px;color:rgba(24,80,110,0.85);margin-top:6px;">(Full Date)</div>`,
+    clueImage:"https://i.pinimg.com/736x/b7/1a/61/b71a619d566e10f9eb736d178be788eb.jpg",
+    expected:["asd","november 23, 2025", "November 23, 2025","november 23 2025", "November 23 2025"]
+  },
+
+  
+  {
+    id:12, ending:true,
+    segments:[
+      `The Bunny's blue blooms back in slow, soft waves.`,
+      `She smiles warmly and whispers, "Happy Birthday."`,
+      `I want to thank you for being there with me, especially on the days when my own thoughts try to swallow me whole.`,
+      `You never ran. You stayed.`,
+      `And that means more than I’ll ever be able to put into words.`,
+      `I want to thank you. Not just for being patient with me, but for seeing me clearly, even when I tried to keep the world at arm’s length.`,
+      `We both had our flaws, our pasts, our sharp edges… and yet you stayed. You tried to understand me even when I barely understood myself.`,
+      `Despite how much I disliked people, despite the walls I built just to avoid being hurt, you managed to break through. Not by force, not by pushing… but simply by being you.`,
+      `You made me realize that I don’t have to hate everybody. That there are rare people whose presence doesn’t feel heavy or exhausting. Someone I can walk beside, instead of ahead or behind. Someone who makes the journey feel less lonely. Someone special.`,
+      `So thank you for existing exactly the way you do.
+If every life offered me a different road, I’d still hope ours meet.
+And if every timeline asked me to choose again, I’d still choose to be present at the timeline of us meeting every single time.`,
+      `You don’t just make my days lighter… you make my chest feel warm in a way I didn’t know was possible.`,
+      `You’re someone I’ll always be grateful for.`,
+      `Today and every day.`
+    ]
+  }
+];
+
+
+let sceneIndex = 0;
+let segIndex = 0;
+
+
+const titleScreen = document.getElementById('title-screen');
+const tl2 = document.getElementById('tl2');
+const tl3 = document.getElementById('tl3');
+const tl4 = document.getElementById('tl4');
+
+const stage = document.getElementById('stage');
+const sprite = document.getElementById('sprite');
+const narrationText = document.getElementById('narration-text');
+const nextSegBtn = document.getElementById('next-seg');
+const centerInput = document.getElementById('center-input');
+const calmInput = document.getElementById('calm-input');
+const centerAnswer = document.getElementById('center-answer');
+const centerSubmit = document.getElementById('center-submit');
+
+const cluePanel = document.getElementById('clue-panel');
+const clueCode = document.getElementById('clue-code');
+const clueImg = document.getElementById('clue-img');
+const clueInput = document.getElementById('clue-answer');
+const clueSubmit = document.getElementById('clue-submit');
+const clueHint = document.getElementById('clue-hint');
+
+const endingScreen = document.getElementById('ending-screen');
+const endingInner = document.getElementById('ending-inner');
+
+
+let typingTimer = null;
+function typeSegment(text, el, pos=0) {
+  clearTimeout(typingTimer);
+  if(pos <= text.length){
+    el.innerHTML = text.substring(0, pos);
+    typingTimer = setTimeout(()=> typeSegment(text, el, pos+1), 14);
+  }
+}
+
+
+function runTitleCinematicInternal(){
+  setTimeout(()=> { tl2.style.opacity = 1; }, 1000);
+  setTimeout(()=> { tl3.style.opacity = 1; }, 1400);
+  setTimeout(()=> { tl4.style.opacity = 1; }, 2100);
+  setTimeout(()=> { document.getElementById('title-screen').style.transition='opacity 800ms'; document.getElementById('title-screen').style.opacity=0; }, 3200);
+  setTimeout(()=> { document.getElementById('title-screen').style.display='none'; startScene(0); }, 4100);
+}
+window.runTitleCinematicInternal = runTitleCinematicInternal;
+
+
+function startScene(i){
+  
+  stage.classList.remove('scene10', 'scene11');
+  if (scenes[i].id === 10) stage.classList.add('scene10');
+  if (scenes[i].id === 11) stage.classList.add('scene11');
+
+  sceneIndex = i;
+  segIndex = 0;
+  const s = scenes[sceneIndex];
+
+ 
+if (s.bg) {
+  document.getElementById('bg-layer').style.backgroundImage = `url('${s.bg}')`;
+  
+  if (s.calm) {
+    document.getElementById('bg-layer').style.filter = 'brightness(0.9) saturate(0.9) contrast(0.96)';
+  } else {
+    document.getElementById('bg-layer').style.filter = 'brightness(.36) saturate(1.08)';
+  }
+
+
+const calmOverlay = document.getElementById('calm-overlay');
+if (s.calm) {
+  calmOverlay.style.opacity = '1';
+} else {
+  calmOverlay.style.opacity = '0';
+}
+
+
+} else {
+  
+  document.getElementById('bg-layer').style.backgroundImage = "url('https://i.imgur.com/MHRjBiX.png')";
+  document.getElementById('bg-layer').style.filter = 'brightness(.36) saturate(1.08)';
+}
+
+  
+  stage.style.display = 'flex';
+
+  
+  if(s.sprite){
+    sprite.src = s.sprite;
+    sprite.style.opacity = 1;
+    sprite.style.transform = 'translateX(-50%) scale(1)';
+  } else {
+    sprite.style.opacity = 0;
+  }
+
+  
+  cluePanel.style.display = 'none';
+  clueCode.innerHTML = '';
+  clueImg.src = '';
+
+  
+  document.getElementById('stage').classList.remove('stage-shake');
+  if(s.glitch && s.id === 1){
+    document.getElementById('stage').classList.add('stage-shake');
+    
+    startScene1Glitching();
+  } else {
+    stopScene1Glitching();
+  }
+
+  
+  if(s.calm){
+    document.getElementById('narration-box').classList.add('calmBox');
+    cluePanel.classList.add('calmBox');
+  } else {
+    document.getElementById('narration-box').classList.remove('calmBox');
+    cluePanel.classList.remove('calmBox');
+  }
+
+  
+  showSegment();
+}
+
+
+function showSegment(){
+  const s = scenes[sceneIndex];
+
+  
+  if(s.ending){
+    stage.style.display = 'none';
+    endingScreen.style.display = 'block';
+    endingInner.innerHTML = s.segments.join('<br><br>');
+    return;
+  }
+
+  const seg = s.segments[segIndex];
+
+  
+  if (s.calm) narrationText.classList.add('softGlitchC'); else narrationText.classList.remove('softGlitchC');
+
+  
+  typeSegment(seg, narrationText, 0);
+
+  
+  if(segIndex < s.segments.length - 1){
+    nextSegBtn.textContent = "Continue";
+    nextSegBtn.disabled = false;
+    centerInput.style.display = 'none';
+  } else {
+    
+    if(s.id === 1){
+      nextSegBtn.textContent = "Enter key to continue";
+      centerInput.style.display = 'flex';
+      centerAnswer.focus();
+    } else {
+      
+      nextSegBtn.textContent = "Reveal Clue";
+      centerInput.style.display = 'none';
+    }
+  }
+}
+
+
+nextSegBtn.addEventListener('click', ()=>{
+  const s = scenes[sceneIndex];
+  if(segIndex < s.segments.length - 1){
+    segIndex++;
+    showSegment();
+  } else {
+    
+    if(s.id === 1){
+      
+      centerAnswer.animate([{transform:'scale(1)'},{transform:'scale(1.02)'},{transform:'scale(1)'}],{duration:320,iterations:1});
+    } else {
+      
+      revealCluePanel();
+    }
+  }
+});
+
+
+centerSubmit.addEventListener('click', ()=>{
+  const s = scenes[sceneIndex];
+  const val = normalizeText(centerAnswer.value || '');
+  const expectedArr = Array.isArray(s.expected) ? s.expected : [s.expected];
+  let ok = false;
+  for(const e of expectedArr){
+    if(normalizeText(e) === val){ ok = true; break; }
+  }
+  if(ok){
+    centerAnswer.value = '';
+    
+    stopScene1Glitching();
+   
+    startScene(sceneIndex + 1);
+  } else {
+    
+    centerAnswer.animate([{transform:'translateX(0)'},{transform:'translateX(-8px)'},{transform:'translateX(8px)'},{transform:'translateX(0)'}],{duration:420,iterations:1});
+  }
+});
+
+
+function revealCluePanel(){
+  const s = scenes[sceneIndex];
+  cluePanel.style.display = 'block';
+  clueCode.innerHTML = s.clueHtml || '';
+  clueImg.src = s.clueImage || 'https://i.imgur.com/placeholder.png';
+  if(s.calm){
+    cluePanel.classList.add('calmBox');
+    clueHint.innerHTML = `<span style="color:rgba(18,60,80,0.9)">Type the phrase shown (case-insensitive).</span>`;
+  } else {
+    cluePanel.classList.remove('calmBox');
+    clueHint.innerHTML = `<span style="color:rgba(180,255,220,0.9)">Decode the clue and type the answer to continue.</span>`;
+  }
+  
+  setTimeout(()=> clueInput.focus(), 240);
+}
+
+
+clueSubmit.addEventListener('click', ()=>{
+  const s = scenes[sceneIndex];
+  const val = normalizeText(clueInput.value || '');
+  const expectedArr = Array.isArray(s.expected) ? s.expected : [s.expected];
+  let ok = false;
+  for(const e of expectedArr){
+    if(normalizeText(e) === val){ ok = true; break; }
+  }
+  if(ok){
+    clueInput.value = '';
+    
+    startScene(sceneIndex + 1);
+  } else {
+    clueInput.animate([{transform:'translateX(0)'},{transform:'translateX(-8px)'},{transform:'translateX(8px)'},{transform:'translateX(0)'}],{duration:420,iterations:1});
+  }
+});
+
+
+centerAnswer.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter') centerSubmit.click();
+});
+clueInput.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter') clueSubmit.click();
+});
+
+
+let scene1Interval = null;
+function startScene1Glitching(){
+  
+  stopScene1Glitching();
+  scene1Interval = setInterval(()=>{
+    const elems = narrationText.querySelectorAll('.scene1-glitch');
+    elems.forEach(el => {
+      const original = el.dataset.orig || el.textContent;
+      if(!el.dataset.orig) el.dataset.orig = original;
+      // create scrambled string
+      const len = original.length;
+      let scrambled = '';
+      const choices = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#%&*+-';
+      for(let i=0;i<len;i++){
+        if(Math.random() < 0.45) scrambled += choices.charAt(Math.floor(Math.random()*choices.length));
+        else scrambled += original.charAt(i);
+      }
+      
+      el.textContent = scrambled;
+      setTimeout(()=> {
+        el.textContent = el.dataset.orig;
+      }, 420 + Math.random()*480);
+    });
+  }, 900 + Math.random()*400);
+}
+function stopScene1Glitching(){
+  if(scene1Interval){ clearInterval(scene1Interval); scene1Interval = null; }
+}
+
+
+function processSegmentHtml(raw){
+  
+  return raw.replace(/\{g:([^}]+)\}/g, function(_, p1){
+    return `<span class="scene1-glitch" data-orig="${p1}">${p1}</span>`;
+  });
+}
+
+
+function typeSegment(text, el, pos=0) {
+  clearTimeout(typingTimer);
+  
+  const processed = processSegmentHtml(text);
+  
+  if(pos <= processed.length){
+    el.innerHTML = processed.substring(0,pos);
+    typingTimer = setTimeout(()=> typeSegment(text, el, pos+1), 14);
+  } else {
+    
+    if(sceneIndex === 0 && segIndex === scenes[0].segments.length - 1){
+     
+      startScene1Glitching();
+    }
+  }
+}
+
+
+function runTitleCinematicInternal(){
+  setTimeout(()=> { document.getElementById('tl2').style.opacity = 1; }, 700);
+  setTimeout(()=> { document.getElementById('tl3').style.opacity = 1; }, 1400);
+  setTimeout(()=> { document.getElementById('tl4').style.opacity = 1; }, 2100);
+  setTimeout(()=> { document.getElementById('title-screen').style.transition = 'opacity 800ms'; document.getElementById('title-screen').style.opacity = 0; }, 3200);
+  setTimeout(()=> { document.getElementById('title-screen').style.display = 'none'; startScene(0); }, 4100);
+}
+window.runTitleCinematicInternal = runTitleCinematicInternal;
+
+
+</script>
+</body>
+</html>
